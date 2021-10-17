@@ -1,10 +1,10 @@
-##################################################################################
+#########################################################################
 [도커컨테이너 만들어보기-실습]
 1. nodejs 어플리케이션 컨테이너 만들기 : hellojs
 2. 우분투 기반의 웹 서버 컨테이너 만들기
 3. 만들어 놓은 컨테이너 배포하기
 
-##################################################################################
+#########################################################################
 1. nodejs 어플리케이션 컨테이너 만들기 : hellojs
 - home 폴더에 작업공간 생성
   ㄴ mkdir hellojs
@@ -41,11 +41,11 @@ www.listen(8080);
 # hellojs docker file
 FROM node:12
 COPY hello.js /
-CMD ["node", ".hello.js"]
+CMD ["node", "/hello.js"]
 ------------------------
 
 - docker 이미지 생성
-  ㄴ docker build -t hellojs.latest .
+  ㄴ docker build -t hellojs:latest .
   ㄴ hellojs 라는 태그로 컨테이너 이미지를 생성한다.
   ㄴ 이미지 레이어 -   (베이스 이미지)   node:12 를 다운로드 받는다.
                 (사용자 APP)   hello.js 가 Root 폴더에 복사 된다.
@@ -53,7 +53,7 @@ CMD ["node", ".hello.js"]
 
 [hellojs 컨테이너 이미지 생성 완료]
 
-##################################################################################
+#########################################################################
 2. 우분투 기반의 웹 서버 컨테이너 만들기
 - home 폴더에 작업공간 생성
   ㄴ mkdir webserver
@@ -77,9 +77,37 @@ CMD     ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
   ㄴ docker build -t webserver:v1 .
 
 [webserver 컨테이너 이미지 생성 완료]
+- 생성된 이미지 확인
+  ㄴ docker image ls
 
 - docker 컨테이너 시작
-  ㄴ docker run -d -p 80:80 --name web websever:v1
+  ㄴ docker run -d -p 80:80 --name web webserver:v1
+  
+- docker 컨테이너 조회
+  ㄴ docker container ls
+  ㄴ docker ps
 
-##################################################################################
+- docker 컨테이너 종료
+  ㄴ docker rm -f web
+
+
+- hellojs 컨테이너 시작
+  ㄴ docker run -d -p 8080:8080 --name web hellojs
+  
+  
+#########################################################################
 3. 만들어 놓은 컨테이너 배포하기
+
+- 도커 계정 로그인
+  ㄴ docker login
+
+- 도커 태그 붙이기 (도커 허브에 저장되는 공간이 접두어로 붙는다)
+  ㄴ docker tag webserver:v1 maurois/webserver:v1
+  ㄴ docker tag hellojs:latest maurois/hellojs:latest
+ 
+- 태그 변경 사항 확인
+  ㄴ docker images
+  
+- 도커 이미지 배포하기
+  ㄴ docker push maurois/webserver:v1
+  ㄴ docker push maurois/hellojs:latest

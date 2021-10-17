@@ -1,0 +1,36 @@
+#########################################################################
+[컨테이너 보관창고-이론]
+Q1. 컨테이너 보관 창고(Docker Registry) 가 있어요?
+Q2. docker hub(registry)를 사용하고 싶어요.
+Q3. private registry 를 구축하고 싶어요.
+
+#########################################################################
+Q1. 컨테이너 보관 창고(Docker Registry) 가 있어요?
+- Registry : 컨테이너 이미지 저장소
+- Docker Hub : hub.docker.com
+- Private Registry : 사내 컨테이너 저장소
+
+#########################################################################
+Q2. docker hub(registry)를 사용하고 싶어요.
+- https://hub.docker.com
+- 이미지종류 : Official Images    	: docker 에서 직접 관리하는 이미지
+           Verified Publisher	: 주요 밴더들이 제공하는 오피셜 이미지
+		   Etc.
+- 이미지 검색
+  ㄴ docker search "keyword"
+  
+- public docker hub 내 Private 한 저장소 할당은 1개까지만 무료.(전체공개가 default)
+  
+#########################################################################
+Q3. private registry 를 구축하고 싶어요.
+- private 인프라 환경에 직접 docker registry 구축은 비용이 들지 않음
+  ㄴ Explore > Official Images > registry
+  ㄴ 또는, docker pull registry
+  
+- docker registry 실행
+  ㄴ docker run -d -p 5000:5000 --restart always --name registry registry:2
+
+- image pull 경로의 변화
+  ㄴ private registry 의 이미지 호출시에는 호출 주소를 접두사로 붙여야 한다.
+    ex) localhost:5000/ubuntu:18.04
+	    docker.example.com:5000/ubuntu:18.04

@@ -1,0 +1,26 @@
+#########################################################################
+[컨테이너 보관창고-실습]
+1. hub.docker.com 에 컨테이너 업로드 및 다운로드
+2. private registry 운영하기
+
+#########################################################################
+1. hub.docker.com 에 컨테이너 업로드 및 다운로드
+- docker search 를 이용한 public docker hub 검색
+  ㄴ ex) docker search httpd
+
+- 컨테이너 이미지 다운로드
+  ㄴ docker pull httpd:latest
+  
+- 컨테이너 이미지 업로드
+  ㄴ docker login 하기
+    - (/root/.docker/config.json 내 접속 인증정보 보관)
+  ㄴ docker tag 지정
+    - 로컬시스탬에 생성된 컨테이너 이미지에 태그를 해야만 대상 계정으로 푸쉬가 가능하다.
+    - ex) docker tag httpd:latest maurois/httpd:latest
+	
+  ㄴ docker push maurois/httpd:latest
+
+#########################################################################
+2. private registry 운영하기
+- docker registry 설치
+
