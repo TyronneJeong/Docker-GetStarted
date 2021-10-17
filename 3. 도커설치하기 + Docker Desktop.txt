@@ -1,0 +1,114 @@
+#########################################################################
+[도커설치하기 + Docker Desktop]
+1. Docker 설치
+2. Docker 설치 방법의 종류
+3. Repository 를 이용한 설치 - Ubuntu
+4. Repository 를 이용한 설치 - CentOS
+5. usermod 로 관리자 권한 부여
+6. Docker Desktop 설치
+
+#########################################################################
+1. Docker 설치
+- https://docs.docker.com/engine/install/
+- 지원되는 OS 과 종류별 설치 가이드
+
+#########################################################################
+2. Docker 설치 방법의 종류
+- Docker's Repositories 를 이용한 설치 	(외부 네트워크 사용이 가능한 환경)
+- DEB 패키지 파일을 이용한 수동 설치 			(외부 네트워크 사용이 불가능한 환경)
+- 자동화된 convenience scripts를 통한 설치	(테스트 및 개발 환경)
+
+#########################################################################
+3. Repository 를 이용한 설치 - Ubuntu
+- 우분투 패키지 목록 업데이트
+  ㄴ sudo apt-get update
+  
+- docker 사용을 위한 제반 패키지 설치
+  ㄴ sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+  
+- 도커 리파지토리와 통신을 위한 인증서 다운로드
+  ㄴ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+- Docker's Reopositories 주소정보 추가
+  ㄴ echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+- 도커 엔진 설치
+  ㄴ sudo apt-get update
+  ㄴ sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+- 도커 정상 구동 확인
+  ㄴ 우분투의 경우 서비스 설치시 해당 서비스가 자동으로 시작된다.
+  ㄴ 우분투의 경우 서비스 설치시 해당 서비스가 자동으로 시작 프로그램 여부가 enable 된다.
+  ㄴ sudo docker run hello-world
+
+- 설치된 도커 버전 확인
+  ㄴ sudo docker version
+
+[완료]
+
+#########################################################################
+4. Repository 를 이용한 설치 - CentOS
+- CentOS 의 경우 대부분의 작업이 root 권한이 필요하다.
+- root 유저 전환
+  ㄴ su - 
+
+- docker 사용을 위한 제반 패키지 설치 
+  ㄴ CentOS의 경우 OS 설치시 기본 제공하는 패키지가 우분투에 비해 많다.
+  ㄴ sudo yum install -y yum-utils
+
+- Docker's Reopositories 주소정보 추가
+  ㄴ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+	
+- 도커 엔진 설치
+  ㄴ sudo yum install docker-ce docker-ce-cli containerd.io
+
+- 도커 구동 및 서비스 활성화 등록
+  ㄴ 우분투와 다르게 CentOS 는 설치 서비스의 실행 및 활성화가 수동이다.
+  ㄴ sudo systemctl start docker
+  ㄴ sudo systemctl enable docker
+
+- 설치된 도커 버전 확인
+  ㄴ sudo docker version
+
+[완료]
+
+#########################################################################
+5. usermod 로 관리자 권한 부여
+- docker 명령의 수행 권한은 ROOT 가 기본이다.
+- 아래의 방법으로 관리자 유저에게도 docker client 명령 수행 권한을 부여 해준다.
+  ㄴ usermod -a -G docker guru
+    (usermod additional Group docker guru)
+
+- 사용자를 전환하여 테스트 한다.
+  ㄴ su - guru
+  ㄴ docker ps
+
+#########################################################################
+6. Docker Desktop 설치
+- Docker Desktop 은 온라인 사용자의 계정정보가 필요하다.
+- Docker Desktop 다운로드
+  ㄴ https://docs.docker.com/desktop/windows/install/
+
+- 도커는 리눅스 커널상에서 동작하는 엔진이기 때문에 Docker Desktop 사용시,
+  WSL (Windows Subsystem for Linux)을 설치 해야만 한다.
+  ㄴ https://aka.ms/wsl2kernel
+  ㄴ x64 머신용 최신 WSL2 Linux 커널 업데이트 패키지 [다운로드]
+
+- Docker Desktop 을 실행 하고 로그인 한다.
+
+- 윈도우즈 powershell 을 통한 정상 설치 확인
+  ㄴ powershell 을 실행하여 docker 명령어를 실행하여 본다
+  ㄴ nginx 컨테이너 설치 		: docker pull nginx
+  ㄴ 설치된 도커 이미지 확인 	: docker images
+  ㄴ 활성화된 컨테이너에 접속하기	: curl localhost
+  ㄴ 컨테이너 종료하기			: docker rm -f [컨테이너명]
+  ㄴ 컨테이너 이미지 삭제하기    : docker rmi -f [컨테이너이미지명]

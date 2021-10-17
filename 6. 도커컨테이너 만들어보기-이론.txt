@@ -1,0 +1,61 @@
+##################################################################################
+[도커컨테이너 만들어보기-이론]
+Q1. 무엇을 컨테이너로 만드는 것인가?
+Q2. 컨테이너는 어떻게 만드는 것인가? dockerfile 의 의미
+Q3. 내가 만든 컨테이너를 배포 하려면?
+##################################################################################
+
+Q1. 무엇을 컨테이너로 만드는 것인가?
+- 개발한 프로그램과 실행 환경을 컨테이너 화 하여 이미지로 생성
+- MSA(Micro Service Architecture) 환경의 ployglot 애플리케이션 운영에 적합
+- ployglot (여러 언어를 사용하는 ≒ Multilingualism) programming
+  ㄴ 다양한 언어로 개발된 프로그램
+
+Q2. 컨테이너는 어떻게 만드는 것인가? dockerfile 의 의미
+- dockerfile : Container 생성을 도와주는 명령어 집합
+  ㄴ 도커파일내 지정 가능한 지시어(instruction) 들을 서술하여 작성
+  ㄴ 대/소문자 구분은 하지 않으나 가독을 위해 사용
+    -------------------------------
+	$ mkdir build
+	$ cd build
+	$ vi dockerfile
+    -------------------------------
+	FROM 	node:12      				<-- base image 지정이 가장 선행 작업
+	COPY	hello.js /    				<-- hello.js 를 /(root) 에 복사
+	CMD		["node", "/hello.js"]		<-- 컨테이너 시작 후 적용될 CMD
+	-------------------------------
+	$ docker build -t hellojs:latest . 	<-- '.' 현재 위치에 hellojs의 가장 최근 이미지를 빌드 하겠다.
+	
+- Docker 문법
+  [기본정보]
+  ㄴ # 			comment	
+  ㄴ FROM		컨테이너의 BASE IMAGE(운영환경) - 가장 선행 작업
+  ㄴ MAINTAINER	이미지를 생성한 사람의 이름 과 연락 정보등
+  ㄴ LABEL		컨테이너 이미지 레이블
+                (DESC, 빌드 날짜, 팀 이름 등 생성정보)
+  
+  [빌드]
+  ㄴ RUN			컨테이너 빌드를 위해 base image[컨테이너] 에서 실행할 commands 지정 
+                (ex. pip 명령등으로 컨테이너에 패키지 설치등에 이용)
+  ㄴ COPY		컨테이너 빌드시 [호스트]에 존재하는 파일을 [컨테이너]로 복사
+  ㄴ ADD			컨테이너 빌드시 [호스트]에 존재하는 파일을 [컨테이너]에 추가 
+                (tar형태의 archive 파일을 설치, url을 통한 설치파일 추가 등이 가능)
+  
+  [환경변수]
+  ㄴ WORKDIR		컨테이너 빌드시 명령이 실행될(RUN) 작업 디렉토리 설정
+  ㄴ ENV			환경변수 지정
+  ㄴ USER		명령 및 컨테이너 실행시 적용할 유저 설정 (DEFAULT는 root 계정으로 컨테이너가 빌드 되는데 USER 등록으로 su 가능. 권장)
+  ㄴ VOLUME		파일 또는 디렉토리를 컨테이너의 디렉토리로 마운트 (ex. /var/lib/mysql 을 볼륨으로 지정하여 영구 볼륨 운영)
+  ㄴ EXPOSE		컨테이너 동작 시 외부에서 사용할 포트 지정 (쿠버의 expose 랑 비슷)
+  
+  [온로드]
+  ㄴ CMD			컨테이너 동작시 자동으로 실행할 서비스나 스크립트 지정. 명령어 + 파라미터 형식
+                (e.g CMD ["node", "/hello.js"])
+  ㄴ ENTRYPOINT	컨테이너 시작시 요청되는 명령어. 쉘 구동 가능.
+
+Q3. 내가 만든 컨테이너를 배포 하려면?
+- docker build -t hellojs:latest .
+
+- docker login
+
+- docker push hellojs.latest

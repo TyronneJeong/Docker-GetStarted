@@ -1,0 +1,83 @@
+#########################################################################
+[환경구성하기-Ubuntu]
+1. ubuntu 20.04 설치
+2. 기본구성
+3. 원격 로그인(SSH)이 가능하도록 구성
+4. 스냅샷 생성
+
+#########################################################################
+1. ubuntu 20.04 설치
+- 우분투 다운로드 : https://ubuntu.com/download
+- docker-ubuntu VM 에 디스크 이미지 삽입 후 설치 진행
+  ㄴ GUI 모드로 설치
+  ㄴ 이용자 정보 입력
+     - 이름			: guru
+	 - 컴퓨터이름		: docker-ubuntu.example.com (다른 컴퓨터에서 보여지는 이름)
+	 - 사용자이름선택		: guru
+	 - 암호선택		: password
+	 - 암호확인		: password
+
+- [설치완료후] - [설정]
+  ㄴ [네트워크] -> [유선] -> [환경설정] -> [IPv4]
+  ㄴ IPv4 방식		: 자동(DHCP) -> 수동
+    주소         	: 10.100.0.105 
+    넷마스크     	: 24 or 255.255.255.0
+    게이트웨이  	: 10.100.0.1
+    네임서버(DNS) 	: 10.100.0.1
+    (연결 재설정 후 할당받은 IP 가 10.100.0.105가 맞는지 확인)
+  
+- [터미널작업]
+  ㄴ 화면 확대    	: Ctrl + Shit + (+) / 화면 축소 : Ctrl + -
+  ㄴ 호스트명 변경 	: vi /etc/hostname
+    - docker-ubuntu.example.com 으로 변경.
+	
+  ㄴ 네트워크 정보 추가 : vi /etc/hosts
+    - 10.100.0.105    docker-ubuntu.example.com    docker-ubuntu
+    - 10.100.0.106    docker-centos.example.com    docker-centos
+	
+  ㄴ 우분투의 실행 환경을 CLI 로 변경		: sudo systemctl set-default multi-user.target
+    (↔ 우분투의 실행 환경을 GUI 로 변경	: sudo systemctl isolate graphical.target
+
+  ㄴ reboot
+  
+#########################################################################
+3. 원격 로그인(SSH)이 가능하도록 구성
+- SSH 설치
+  ㄴ apt-get update 로 apt 리파지토리의 목록을 갱신한다.
+  ㄴ apt-get install -y openssh-server curl vim tree
+    ㄴ 4가지를 설치
+
+- SSH DAEMON 설치확인
+  ㄴ ubuntu 의 경우 패키지 설치후 자동으로 데몬이 실행된다.
+  ㄴ systemctl status sshd
+    (sshd 서비스 실행 확인)
+  ㄴ ssh guru@localhost
+    (ssh 접속 확인)
+  
+- super putty 설치
+  ㄴ putty 설치 & superputty 를 설치 한다.
+  ㄴ 접속정보 -> Session Name    : docker-ubuntu 
+             Host Name or IP : 127.0.0.1 
+             TCP Port        : 105
+             Connection Type : SSH 
+             Login Username  : guru
+  ㄴ su - or sudo -i         // root 사용자 스위치
+  ㄴ ip addr                 // 현재 시스템 ip 정보 확인
+  ㄴ cat /etc/os-release     // os 정보 확인
+  ㄴ free -h                 // 시스템 자원 정보 확인
+  ㄴ uname -r                // Kernel 정보 확인
+  
+#########################################################################
+4. Virtual Box 스냅샷 찍기
+- 이미지 오른쪽 가장자리 버튼 클릭
+  ㄴ 스냅샷
+    ㄴ 찍기
+	  --------------------------
+      name   : os-install
+	  --------------------------
+      id/pw  : guru / lrkkdxic
+      root   : root / lrkkdxic
+      ipaddr : 10.100.0.105
+      sshd
+      text login
+	  --------------------------

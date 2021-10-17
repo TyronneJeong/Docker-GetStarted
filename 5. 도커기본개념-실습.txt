@@ -1,0 +1,82 @@
+#########################################################################
+[도커기본개념-실습]
+1. Docker Hub 에서 컨테이너 이미지 검색
+2. 컨테이너 이미지 다운로드 후 image layer 확인
+3. 컨테이너 실행 및 확인
+
+#########################################################################
+0. Docker daemon 의 상태 확인
+- systemctl status docker
+     docker.service - Docker Application Container Engine
+     Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor>
+     Active: active (running) since Sun 2021-10-17 17:15:24 KST; 1min 50>
+  ㄴ [Active] - 활성화 상태
+  ㄴ [docker.service; enabled;] - 서버 실행시 자동 실행 여부
+
+#########################################################################	 
+1. Docker Hub 에서 컨테이너 이미지 검색
+- 도커 허브의 이미지 검색
+  ㄴ docker search nginx
+    (NAME | DESCRIPTIONS | STARS | OFFICIAL | AUTOMATED) 형태로 출력
+  
+- 설치된 도커 패키지 구조
+  ㄴ cd /var/lib/docker/ 폴더로 이동
+    --------------------
+    - buildkit
+    - containers
+    - image
+    - netwrok
+    -『overlay2』<-- 이미지 레이어가 보관중인 폴더
+    - plugin
+    - runtime
+    - swarm
+    - tmp
+    - trust
+    - volumes
+	--------------------
+
+- 현재 사용중인 이미지 목록 조회
+  ㄴ docker images
+
+- 컨테이너 이미지 다운로드
+  ㄴ docker pull nginx
+    -----------------------------------
+    Using default tag: latest
+    latest: Pulling from library/nginx
+    b380bbd43752: Pull complete
+    fca7e12d1754: Pull complete
+    745ab57616cb: Pull complete
+    a4723e260b6f: Pull complete
+    1c84ebdff681: Pull complete
+    858292fd2e56: Pull complete
+    -----------------------------------
+    [5개의 이미지 파일 다운로드 완료]
+
+#########################################################################
+2. 컨테이너 이미지 다운로드 후 image layer 확인
+
+- 최종버전(latest)으로 설치된 이미지 목록 조회
+  ㄴ docker image ls
+
+#########################################################################
+3. 컨테이너 실행 및 확인
+- 컨테이너 이미지 실행
+  ㄴ docker run --name web -d -p 80:80 nginx
+    - docker run -d --name web -p 80:80 nginx:latest
+	  ㄴ -d	 	: detached(분리된) 모드로 (반대:foreground)
+	  ㄴ --name 	: web 이라는 이름의 컨테이너 (컨테이너를 식별하는 이름. 그외 UUID long, UUID short이 있다.)
+      ㄴ -p	 	: 80포트로 nginx 이미지를 담아 실행 시킨다. (호스트의 포트 80 을 컨테이너 80포트에 연결 시킨다.)
+	              (※ -P 1234-1236:1234-1236 : 대역폭으로 할당도 가능하다. )
+				 
+- 컨테이너에 접속 테스트
+  ㄴ curl localhost:80
+  ㄴ 리턴되는 http 문서정보 확인
+
+- 컨테이너 종료 및 이미지 삭제
+  ㄴ docker stop web
+    (실행중인 컨테이너 web이라는 이름의 컨테이너 종료)
+  ㄴ docker rm web
+    (web 이라는 이름의 컨테이너 삭제)
+  ㄴ docker rm image nginx
+    (nginx 컨테이너 이미지 삭제)
+

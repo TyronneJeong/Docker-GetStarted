@@ -1,0 +1,53 @@
+#########################################################################
+[Virtual Box]
+1. VirtualBox 설치
+2. NAT 네트워크 구성
+3. VM(가상머신) 만들기
+
+#########################################################################
+1. VirtualBox 설치
+- https://www.virtualbox.org/
+
+#########################################################################
+2. NAT 네트워크 구성
+- Virtual Box 도구 
+  ㄴ 환경설정 
+     ㄴ 네트워크
+- 새 NAT네트워크 추가
+  ㄴ network name    : LocalNetwork
+  ㄴ network CIDR    : 10.100.0.0/24
+  ㄴ port forwarding : [1] docker-ubuntu 용
+                      Name          : docker1
+                      Protocol      : TCP
+                      HOST-IP       : 127.0.0.1
+                      Host-Port     : 105
+                      Guest-IP      : 10.100.0.105
+                      Guest-Port    : 22
+                      
+                      [2] docker-centos 용
+                      Name          : docker2 
+                      Protocol      : TCP
+                      HOST-IP       : 127.0.0.1
+                      Host-Port     : 106
+                      Guest-IP      : 10.100.0.106
+                      Guest-Port    : 22
+
+#########################################################################
+3. VM(가상머신) 만들기
+- cmd : dxdiag 로 시스템 사양 확인
+- 플로피 디스크 마운트 해제
+- [docker-ubuntu]
+  ㄴ 새로만들기
+    name       : docker-ubuntu
+	cpu        : minimum 2core, 4 core
+    memory     : 4096
+    disk       : 20Gb
+    network    : NAT네트워크 -> LocalNetwork 설정
+  
+- [docker-centos]
+  ㄴ 새로만들기
+    name       : docker-centos
+	cpu        : minimum 2core, 4 core
+    memory     : 4096
+    disk       : 20Gb
+    network    : NAT네트워크 -> LocalNetwork 설정

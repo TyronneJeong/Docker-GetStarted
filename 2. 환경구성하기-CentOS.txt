@@ -1,0 +1,78 @@
+#########################################################################
+[환경구성하기-Ubuntu]
+1. CentOS 7 설치
+2. 기본구성
+3. 원격 로그인(SSH)이 가능하도록 구성
+4. 스냅샷 생성
+#########################################################################
+1. CentOS 7 설치
+- CentOS 7 다운로드	: http://isoredirect.centos.org/centos/7/isos/x86_64/
+- docker-centos VM 에 디스크 이미지 삽입 후 설치 진행
+- 소프트웨어 선택   		: GNOME 데스크탑
+- 설치대상        		: Done 버튼 클릭시 자동 파티셔닝
+- 설치 진행 중 관리자 정보 등록
+  ㄴ Ethernet OFF -> Ethernet ON
+  ㄴ Host Name   : docker-centos.example.com [Apply]
+  ㄴ Configure...
+	 - IPv4 방식	    : 자동(DHCP) -> 수동
+     - 주소         	: 10.100.0.106
+     - 넷마스크     	: 24 or 255.255.255.0
+     - 게이트웨이  		: 10.100.0.1
+     - 네임서버(DNS) 	: 10.100.0.1
+	 
+  ㄴ 사용자 계정 및 루트 패스워드 설정
+     - 이름			: guru
+	 - 암호확인		: password
+	 - ROOT 암호		: password
+
+#########################################################################
+2. 기본구성
+- [터미널작업]
+  ㄴ screen size : Ctrl + Shit + (+) / 화면 축소 : Ctrl + -
+  ㄴ CentOS KDM  : libvirtd 중지 (CentOS 기본 가상환경)
+    - sudo systemctl stop libvirtd
+	- sudo systemctl disable libvirtd
+	
+  ㄴ 호스트명 확인 : vi /etc/hostname
+    - docker-centos.example.com 확인
+	
+  ㄴ 네트워크 정보 추가 : vi /etc/hosts
+    - 10.100.0.105    docker-ubuntu.example.com    docker-ubuntu
+    - 10.100.0.106    docker-centos.example.com    docker-centos
+	
+  ㄴ CentOS의 실행 환경을 CLI 로 변경      	: sudo systemctl set-default multi-user.target
+	(↔ CentOS의 실행 환경을 GUI 로 변경	: sudo systemctl isolate graphical.target
+
+  ㄴ yum install -y tree 설치
+
+  ㄴ reboot
+
+#########################################################################
+5. [SSH를 통한 접속]
+- [super putty 설치]
+  ㄴ putty 설치 후 superputty를 설치 한다.
+  ㄴ 접속정보 : Session Name:docker-centos
+             Host Name or IP : 127.0.0.1 
+             TCP Port        : 106
+             Connection Type : SSH 
+             Login Username  : guru
+  ㄴ su - or sudo -i         // root 사용자 스위치
+  ㄴ ip addr                 // 현재 시스템 ip 정보 확인
+  ㄴ cat /etc/os-release     // os 정보 확인
+  ㄴ free -h                 // 시스템 자원 정보 확인
+  ㄴ uname -r                // Kernel 정보 확인
+
+#########################################################################
+4. Virtual Box 스냅샷 찍기
+- 이미지 오른쪽 가장자리 버튼 클릭
+  ㄴ 스냅샷
+    ㄴ 찍기
+	  --------------------------
+      name   : os-install
+	  --------------------------
+      id/pw  : guru / lrkkdxic
+      root   : root / lrkkdxic
+      ipaddr : 10.100.0.106
+      centos 7
+      text login
+	  --------------------------

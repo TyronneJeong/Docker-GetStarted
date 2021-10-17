@@ -1,0 +1,85 @@
+##################################################################################
+[도커컨테이너 만들어보기-실습]
+1. nodejs 어플리케이션 컨테이너 만들기 : hellojs
+2. 우분투 기반의 웹 서버 컨테이너 만들기
+3. 만들어 놓은 컨테이너 배포하기
+
+##################################################################################
+1. nodejs 어플리케이션 컨테이너 만들기 : hellojs
+- home 폴더에 작업공간 생성
+  ㄴ mkdir hellojs
+  ㄴ cd    hellojs
+  
+- 어플리케이션 작성
+  ㄴ cat > hello.js (or) vi hello.js
+---------------------------------------------------------------------------------
+SAMPLE CODE
+---------------------------------------------------------------------------------
+const http = require('http');
+const os = require('os');
+console.log("Test server starting ... ");
+
+var hadnler = function(request, response) {
+    console.log("Recieved request from " + request.connection.remoteAddress);
+    response.writeHead(200); // 정상상태코드
+    response.end("Container Hostname: " + os.hostname() + "\n");
+};
+
+var www = http.createServer(handler);
+www.listen(8080);
+---------------------------------------------------------------------------------
+
+- nodejs 설치
+  ㄴ [docker hub] -> [explore] 에서 원하는 컨테이너 이미지를 검색한다.
+  ㄴ [Supported tags and respective Dockerfile links]
+     - 버전 별 node 컨테이너 이미지의 dockerfile 을 확인 할 수 있다.
+
+- 사용자 어플리케이션의 dockerfile 작성
+  ㄴ hello.js 파일과 동일 폴더에 dockerfile 을 생성한다.
+  ㄴ vi dockerfile
+------------------------
+# hellojs docker file
+FROM node:12
+COPY hello.js /
+CMD ["node", ".hello.js"]
+------------------------
+
+- docker 이미지 생성
+  ㄴ docker build -t hellojs.latest .
+  ㄴ hellojs 라는 태그로 컨테이너 이미지를 생성한다.
+  ㄴ 이미지 레이어 -   (베이스 이미지)   node:12 를 다운로드 받는다.
+                (사용자 APP)   hello.js 가 Root 폴더에 복사 된다.
+                (CMD 실행)    node hello.js 라는 커맨드 명령이 실행된다.
+
+[hellojs 컨테이너 이미지 생성 완료]
+
+##################################################################################
+2. 우분투 기반의 웹 서버 컨테이너 만들기
+- home 폴더에 작업공간 생성
+  ㄴ mkdir webserver
+  ㄴ cd    webserver/
+  
+- dockerfile 생성
+  ㄴ vi dockerfile
+----------------------------------------------------------
+FROM    ubuntu:18.04
+LABEL   maintainer="Daehwa Jeong <maurois@nate.com>"
+
+#install apache
+RUN     apt-get update \
+        && apt-get install -y apache2
+RUN     echo "hello world..?!" > /var/www/html/index.html
+EXPOSE  80
+CMD     ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
+----------------------------------------------------------
+
+- 컨테이너 이미지 생성
+  ㄴ docker build -t webserver:v1 .
+
+[webserver 컨테이너 이미지 생성 완료]
+
+- docker 컨테이너 시작
+  ㄴ docker run -d -p 80:80 --name web websever:v1
+
+##################################################################################
+3. 만들어 놓은 컨테이너 배포하기
