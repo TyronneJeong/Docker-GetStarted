@@ -1,0 +1,101 @@
+#########################################################################
+[빌드에서 운영까지 using Docker Compose]
+Q1. Docker-Compose 소개
+Q2. Docker-Compose 문법 소개
+Q3. Docker-Compose 운영 예제
+
+#########################################################################
+Q1. Docker-Compose 소개
+- Docker Compose 란?
+  ㄴ https://docs.docker.com/compose/
+  ㄴ 여러개의 컨테이너의 특성을 정의하고 실행 가능하게 만드는 관리도구
+  ㄴ YAML 파일을 통해 컨테이너 세부 정보를 정의하고,
+    Compose는 YAML 파일을 명령어로 변환하여 docker 에게 전달한다.
+
+#########################################################################
+Q2. Docker-Compose 문법 소개
+- Docker-Compose 문법
+  ㄴ YAML 설정 예시
+    - https://docs.docker.com/samples/wordpress/
+
+  ㄴ version    : docker-compose 의 버전 명 서술
+    - 버전 별 설명 확인은 도커 문서 참조
+    - https://docs.docker.com/compose/compose-file/compose-file-v3/
+	
+  ㄴ service    : 컨테이너 옵션 정의 (웹서버 이미지, DB이미지)
+  ㄴ build      : 컨테이너 빌드 정보
+  ㄴ image      : compose 를 통해 실행할 이미지 지정
+  ㄴ command    : 컨테이너에서 실행될 커맨드 명령어 지정
+  ㄴ port       : 컨테이너를 노출 시킬 포트 지정
+  ㄴ link       : 다른 컨테이너와 연결된 정보 지정
+  ㄴ expose     : 링크로 연계된 컨테이너에게 공개할 포트정보
+  ㄴ volumes    : 컨테이너 볼륨 마운트 정보
+  ㄴ enviroment : 컨테이너에 적용할 환경변수 정의
+  ㄴ restart    : 컨테이너 종료시 재시작 정책
+  ㄴ depends_on : 컨테이너간 종속성 정의. 선행 컨테이너 지정 가능
+
+#########################################################################
+Q3. Docker-Compose 운영 예제 (수행순서)
+- 1. 서비스 디렉토리 생성
+  ㄴ mkdir webserver
+  ㄴ cd webserver
+
+- 2. docker-compose.yaml 생성
+  ㄴ cat > docker-compose.yaml
+----------------------------------------------
+version: "3.9"  
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    volumes:
+      - wordpress_data:/var/www/html
+    ports:
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+volumes:
+  db_data: {}
+  wordpress_data: {}
+----------------------------------------------
+
+- 3. docker-compose 로 수행
+  ㄴ 해당 디렉토리의 docker-compose.yaml 실행 (이미지 빌드를 포함)
+    - docker-compose up -d
+	
+  ㄴ 컨테이너 상태조회
+    - docker-compose ps
+	
+  ㄴ 컨테이너의 스케일을 지정
+    - docker-compose scale mysql=2
+	
+  ㄴ 컨테이너 시작
+    - docker-compose start
+	
+  ㄴ 컨테이너 중지
+    - docker-compose stop
+	
+  ㄴ 컨테이너 모두 종료 처리
+    - docker-compose down
+	
+  ㄴ yaml 파일 점검
+    - docker-compose config
+	
+  ㄴ 파일 실행
+    - docker-compose -f {file_path}.yaml

@@ -1,0 +1,80 @@
+#########################################################################
+[도커컨테이너 스토리지-이론]
+1. 컨테이너 네트워크 사용하기
+2. 컨테이너 포트 외부로 노출하기
+3. user-defined network 구성하기
+4. 컨테이너간 통신 - 멀티 Tier 서비스 구현하기
+
+#########################################################################
+1. 컨테이너 네트워크 사용하기
+- docker0 bridge network 확인
+  ㄴ docker0 IP 확인
+    - ip addr
+	
+  ㄴ 브릿지 네트워크 확인 
+    - (CentOS 설치됨, ubuntu 미설치 : apt install bridge-utils)
+    - brctl show
+
+  ㄴ 차례로 시작되는 컨테이너의 IP 정보를 확인하기
+    - docker run --name c1 -it busybox
+	  ㄴ 컨테이너 실행시 기존 IP 대역폭(172.17.0.XXX) 에서 하나씩 증가하는 것을 확인가능
+	  ㄴ ip addr
+	  
+	- docker run --name c2 -it busybox
+	...
+	
+  ㄴ 172.17.0.* 에서 할당된 컨테이너IP의 마스커레이드
+    - docker0 를 통해 통신하는 모든 컨테이너는 외부와의 통신에 마스커 레이딩을 당한다.
+	- docker0 의 마스커레이드 정보 확인
+      ㄴ iptables -t nat -L -v
+	
+#########################################################################
+2. 컨테이너 포트 외부로 노출하기
+- 포트포워딩 하기 (-p hostPort:containerPort)
+  ㄴ docker run -d -p 80:80 --name web1 nginx
+
+- 노출된 포트정보로 접속 하기
+  ㄴ curl localhost:80
+  
+- 포트포워딩 하기 (-p to)
+  ㄴ docker run -d -p 80 --name web2 nginx
+
+- 포트포워딩 하기 (-P)
+  ㄴ 컨테이너 포트는 dockerfile 에 정의된 EXPOSE 80 정보를 사용 함
+  ㄴ docker run -d -P --name web3 nginx
+
+#########################################################################
+3. user-defined network 구성하기
+- 사용자 지정 네트워크 생성
+  ㄴ docker network create --driver bridge \
+	--subnet 192.168.100.0/24 \
+	--gateway 192.168.100.254 \
+	mynet
+
+- 네트워크 확인
+  ㄴ docker network ls
+  ㄴ docker network inspect {network_name}
+  
+- 네트워크 삭제
+  ㄴ docker network rm {network_name}
+  
+- 컨테이너에 사용자 지정 네트워크 부여
+  ㄴ docker run -it --name c1 --net mynet busybox
+    - Static IP 할당 옵션
+	  ㄴ --ip 192.168.100.100
+    - 사용자가 지정한 IP range 내 할당 정보 확인
+    - ip addr
+
+#########################################################################
+4. 컨테이너간 통신 - 멀티 Tier 서비스 구현하기
+- mysql 서버 실행
+  ㄴ docker run -d --name mysql -v /dbdata:/var/lib/mysql \
+	  -e MYSQL_ROOT_PASSWORD=wordpress
+	  -e MYSQL_PASSWORD=wordpress     
+	  mysql:5.7
+
+- wordpress 서버 실행
+  ㄴ docker run -d --name wordpress --link mysql:mysql \
+  	  -e WORDPRESS_DB_PASSWORD=wordpress \
+  	  -p 80:80 \
+  	  wordpress:4

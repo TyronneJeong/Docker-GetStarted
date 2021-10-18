@@ -1,0 +1,64 @@
+#########################################################################
+[도커컨테이너 스토리지-이론]
+Q1. 컨테이너 네트워크 동작 원리
+Q2. 컨테이너화 된 서비스를 외부에 노출 시키기
+Q3. 컨테이너 네트워크 지정으로 Static IP 할당 방법
+Q4. 컨테이너간 통신 - 멀티 Tier 서비스 방법
+
+#########################################################################
+Q1. 컨테이너 네트워크 동작 원리
+- Container Network Model
+  ㄴ 도커는 컨테이너화된 어플리케이션과 호스트 네트워크(eth0) 사이에서 가상의 브릿지 네트워크를 제공한다. 
+    - Virtual ehternet bridge : 172.17.0.0/16
+	- docker0 IP : 172.17.0.1 <컨테이너들의 Gateway 역할>
+	- L2 switch 
+	- 172.17.X.Y 로 IP 주소 할당
+
+#########################################################################
+Q2. 컨테이너화 된 서비스를 외부에 노출 시키기
+- Port-forwarding
+  ㄴ Containerport 를 외부로 노출시켜 연결을 활성화 시킨다.
+  
+  ㄴ iptables rule 을 통해 포트를 노출 (docker 명령어를 통해 추가)
+    - docker run -p hosrPort:containerPort
+	- docker run -p ocntainerPort
+	- docker run -P (임의의 포드 자동 할당)
+	
+  ㄴ docker run --name web -d -p 80:80 nginx:1.14
+  
+  ㄴ iptables 에 추가된 rule 확인
+    - iptables -t nat -L -n -v
+
+#########################################################################
+Q3. 컨테이너 네트워크 지정으로 Static IP 할당 방법
+- user-defined bridge network 생성
+  ㄴ 사용자가 지정한 네트워크 생성
+    - docker network create --driver bridge \
+	    --subnet 192.168.100.0/24 \			-- 미지정시 172.17 다음으로 지정됨
+		--gateway 192.168.100.254 \			-- 미지정시 XXX.XXX.XXX.1 으로 지정됨
+		mynet
+		
+  ㄴ 사용자가 생성한 네트워크 조회
+	- docker network ls
+
+  ㄴ 사용자가 생성한 네트워크를 컨테이너에 할당
+    - 사용자 지정 네트워크에 한하여 IP 지정이 가능.
+    - docker run -d --name hellojs \
+	    --net mynet --ip 192.168.100.100 \
+		-p 8080:8080 \
+		maurois/hellojs
+
+#########################################################################
+Q4. 컨테이너간 통신 멀티 Tier 서비스 방법
+- 컨테이너간 통신을 위해서는 link 옵션과 환경 변수를 통해 통신을 구현한다.
+  ㄴ mysql 서버 실행
+    - docker run -d --name mysql -v /dbdata:/var/lib/mysql \
+	    -e MYSQL_ROOT_PASSWORD=wordpress   <-- MySQL ROOT 패스워드
+		-e MYSQL_PASSWORD=wordpress        <-- 이용자계정 패스워드
+		mysql:5.7
+  
+  ㄴ wordpress 서버 실행
+    - docker run -d --name wordpress --link mysql:mysql \ --link {컨테이너명:임의이이름}
+	    -e WORDPRESS_DB_PASSWORD=wordpress \
+		-p 80:80 \
+		wordpress:4

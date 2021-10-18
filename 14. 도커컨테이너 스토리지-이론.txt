@@ -1,0 +1,42 @@
+#########################################################################
+[도커컨테이너 스토리지-이론]
+Q1. 컨테이너 볼륨에 대해
+Q2. 영구적인 데이터 보존
+Q3. 컨테이너간 데이터 공유
+
+#########################################################################
+Q1. 컨테이너 볼륨에 대해
+- 컨테이너 이미지는 읽기전용 속성의 파일이다.
+  ㄴ 컨테이너가 추가되는 데이터들은 변도릐 RW 레이어에 저장된다. (union file system 또는 overlay)
+  ㄴ RW 레이어는 특정 폴더 위치의 형태로 존재한다. (/var/lib/mysql)
+  
+#########################################################################
+Q2. 영구적인 데이터 보존
+- 데이터 저장을 위해서는 외부 스토리지를 마운트 해야 한다.
+  ㄴ docker rm <컨테이너 이름> 으로 삭제시 RW 레이어의 내용은 모두 사라진다.
+  ㄴ RW레이어에 저장되는 데이터를 호스트 디스크에 저장되도록 지정한다.
+    - [/var/lib/mysql] -> [/dbdata]
+	
+	- Persistant Volume 지정을 위해 도커 실행시 -v 옵션으로 위치는 지정한다.
+	
+	- docker run -d --name db
+	  -v /dbdata:/var/lib/mysql	<- 호스트의 /dbdata/ 폴더에 /var/lib/mysql 정보가 저장된다.
+	  -e MYSQL_ALLOW_EMPTY_PASSWORD=pass
+	  mysql:latest
+	  
+    - volume 옵션
+      ㄴ -v <host path>:<container mount path>
+	    - docker run -d -v /dbdata:/var/lib/mysql -e MYSQL...PASWORD=pass mysql:latest
+		
+	  ㄴ -v <host path>:<container mount path>:<read write mode>
+	    - docker run -d -v /webdata:/var/www/html:ro httpd:latest
+		
+	  ㄴ -v <container mount path>
+	    - docker run -d -v /var/lib/mysql -e MYSQL...PASWORD=pass mysql:latest
+
+#########################################################################
+Q3. 컨테이너간 데이터 공유
+- 호스트내 컨테이너 간 데이터 공유 방법
+  ㄴ 호스트내 동일 볼륨을 각 컨테이너에 마운트 하여 컨테이너간 읽고 쓰기를 공유할 수 있다.
+    - docker run -v /webdata:/webdata -d --name df smlinux/df:latest
+	- docker run -v /webdata:/user/share/nginx/html:ro -d ubuntu:latest

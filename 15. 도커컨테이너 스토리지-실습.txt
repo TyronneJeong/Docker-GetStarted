@@ -1,0 +1,107 @@
+#########################################################################
+[도커컨테이너 스토리지-이론]
+1. mysql db data 영구 보존하기
+2. 호스트 볼륨의 데이터를 readonly 로 지원하기
+3. 컨테이너간 데이터 공유하기
+
+#########################################################################
+1. mysql db data 영구 보존하기
+- 영구볼륨 마운트 (-v 옵션 지정시 폴더 자동 생성이라는데 자동으로 생성이 안됨. mkdir 해줌)
+  ㄴ 호스트 볼륨을 마운트 시킨다.             (-v /dbdata:/var/lib/mysql)
+  ㄴ mysql 실행시 패스워드 정보 설정이 필수이다. (-e MYSQL_ROOT_PASSWORD=pass)
+  ㄴ docker run -d --name db -v /dbdata:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=pass mysql:latest
+
+- mysql 데이터 생성 하기
+  ㄴ mysql 데이터베이스 파일 저장 위치
+    - /var/lib/mysql/dbdata
+	
+  ㄴ mysql 커맨드 실행
+    - 컨테이너 내부에서 쉘 호출
+	  ㄴ docker exec -it db /bin/bash
+	  
+	- mysql 명령어 창 접속
+	  ㄴ mysql -u root -ppass
+	  
+	- 데이터베이스 생성 작업을 수행한다.
+      ㄴ 전체테이블 확인
+	    - show databases;
+	  ㄴ 테이블 생성
+	    - create database <tablename>;
+	  ㄴ 접속종료
+	    - exit
+		
+  ㄴ 호스트 볼륨에 저장된 데이터 확인
+    - /dbdata/	
+	
+- host path 를 생략한 영구볼륨 지정
+  ㄴ docker run -d --name db -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=pass mysql:latest
+  
+  ㄴ DB컨테이너의 볼륨 마운트 정보 확인
+    - docker inspect db
+	- MOUNTS:[{
+		SOURCE:/var/lib/docker/volumes/{uuid}/_data
+	}] 에 저장확인
+	
+- 도커에 생성된 영구볼륨 삭제
+  ㄴ 도커 볼륨 목록 조회
+    - docker volume ls 
+	
+  ㄴ 볼륨 네임을 기준으로 삭제 요청
+    - docker volume rm 220dabf9e1932e80c8a44b30d7e0b32443aab22030b98996291e13ef8299d164
+
+#########################################################################
+2. 호스트 볼륨의 데이터를 readonly 로 지원하기
+- 호스트 영구 볼륨에 HTML 문서 생성
+  ㄴ 공유폴더생성
+    - mkdir /webdata
+	- cd /webdata
+	
+  ㄴ HTML 문서 생성
+    - echo "<h1>sample text</h1>" > index.html
+
+  ㄴ 생성된 문서 확인
+    - cat index.html
+
+- 호스트 영구 볼륨에 존재하는 HTML 문서를 이용하여 컨테이너 웹서비스 수행
+  ㄴ 볼륨 마운트를 포함하여 nginx 실행
+    - docker run -d --name web -p 80:80 -v /webdata:/usr/share/nginx/html:ro nginx:1.14
+	
+  ㄴ 웹브라우저로 접속하여 확인 (나는 안됨)
+
+#########################################################################
+3. 컨테이너간 데이터 공유하기
+- 매크로 프로그램으로 주기적으로 모니터링 되는 데이터 생성
+  ㄴ df.sh 스크립트 작성
+-------------------------
+#!/bin/bash
+mkdir -p /webdata
+while true
+do
+  df -h / > /webdata/index.html
+  sleep 10
+done
+-------------------------
+  
+  ㄴ dockerfile 생성
+-------------------------
+FROM       ubuntu:18.04
+ADD        df.sh /bin/df.sh
+RUN        chmod +x /bin/df.sh
+ENTRYPOINT ["/bin/df.sh"]
+-------------------------
+
+- 도커이미지 생성
+  ㄴ docker build -t df:latest .
+
+- 도커이미지 실행 with 볼륨마운트
+  ㄴ docker run -d -v /webdata:/webdata --name df df:latest
+
+- 파일 생성 정보 확인
+  ㄴ cat /webdata/index.html
+  
+- NGINX 컨테이너 실행 with 볼륨마운트
+  ㄴ docker run -d --name web -v /webdata:/usr/share/nginx/html:ro -p 80:80 nginx:1.14
+
+- NGINX INDEX 파일 갱신 확인
+  ㄴ cd /usr/share/nginx/html/
+  ㄴ cat index.html

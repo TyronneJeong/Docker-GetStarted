@@ -10,32 +10,121 @@
   ㄴ CPU 부하 테스트
     - 2개의 CPU core 에 100% 부하를 발생
     - stress --cpu 2
-	
+    
   ㄴ Memory 부하 테스트
     - 지정된 프로세스 수와 메모리 만큼의 부하 발생
-	- stress --vm 2 --vm-bytes <사용할 크기>
+    - stress --vm 2 --vm-bytes <사용할 크기>
 
 - stress 컨테이너 생성을 위한 dockerfile 생성
   ㄴ vi dockerfile
-  --------------------------------------
-  FROM       debian
-  MAINTAINER maurois <maurois@nate.com>
-  RUN        apt-get upgate; apt-get install -y stress
-  CMD        ["/bin/sh", "-c", "stress -c 2"]
-  --------------------------------------
+--------------------------------------
+* CPU 로드
+--------------------------------------
+FROM       debian
+MAINTAINER maurois <maurois@nate.com>
+RUN        apt-get upgate; apt-get install -y stress
+CMD        ["/bin/sh", "-c", "stress -c 2"]
+--------------------------------------
+* MEMORY 로드
+--------------------------------------
+FROM       debian
+MAINTAINER maurois <maurois@nate.com>
+RUN        apt-get upgate; apt-get install -y stress
+CMD        ["/bin/sh", "-c", "stress --vm 2 --vm-bytes 4096"]
+--------------------------------------
 
 - stress 컨테이너 이미지 생성
   ㄴ docker build -t stress .
 
+[해당 컨테이너 이미지를 이용하여 테스트 진행]
 
+#########################################################################
 1. 컨테이너 리소스 제한
+- 메모리 리소스 제한 테스트
+  ㄴ 메모리스왑 공간 100m 를 준수 한 이미지 실행 [성공케이스] 
+    - docker run -m 100m --memory-swap 100m stress:latest stress --vm 1 --vm-bytes 90m -t 5s
+	 
+  ㄴ 메모리스왑 공간 100m 를 초과 한 이미지 실행 [실패케이스] 
+    - docker run -m 100m --memory-swap 100m stress:latest stress --vm 1 --vm-bytes 150m -t 5s
+	
+  ㄴ 메모리 + 스왑 = 300m 로 stress 구동시 정상 작동 [성공케이스]
+    - docker run -m 100m stress:latest stress --vm 1 --vm-bytes 150m -t 5s
 
+  ㄴ OOM killer 방지 처리
+    - docker run -d -m 100M --name m4 --oom-kill-disable=true nginx
+	- OomKill_Disable 옵션 정보 : docker inspect m4 
+	- cat /sys/fs/cgroup/memory/docker/{container uuid long}/memory.oom_control
+	  ㄴ oom_kill_disable 1 [확인]
+
+- CPU 리소스 제한 테스트
+  ㄴ 현재 시스템의 CPU 자원 조회
+    - lscpu
+
+  ㄴ 특정 CPU Core 에 컨테이너를 할당 시키기
+    - docker run --cpuset-cpus 1 --name c1 -d stress:latest stress --cpu 1
+	- 배정된 CPU 에 프로세스 확인
+	  ㄴ htop 명령어로 확인
+	    ㄴ 우분투는 htop 존재
+		  - apt update
+		  - apte upgrade htop
+		  
+		ㄴ centos 는 별도 설치 필요
+		  - yum update
+		  - yum install -y epel-release
+		  - yum install -y htop
+		
+		ㄴ q 명령으로 htop 종료
+		
+    - crm 으로 컨테이너 이미지 삭제
+	  ㄴ alias crm='docker rm -f $(docker ps -aq)'
+
+  ㄴ 0-1 대역 CPU를 번갈아 가며 컨테이너를 할당 시키기
+    - docker run --cpuset-cpus 0-1 --name c2 -d stress stress --cpu1
+  
+  ㄴ 상대비교량으로 자원 할당
+    - docker run -c 2048 --name cload1 -d stress:latest
+	- docker run         --name cload2 -d stress:latest
+	- docker run -c 512  --name cload3 -d stress:latest
+	- docker run -c 512  --name cload4 -d stress:latest
+
+- Block I/O 제한
+  ㄴ 읽고/쓰기의 속도를 조절 한다.
+    - /dev/xvda:100 - 초당 데이터 전송량 = IOPS * 블럭크기
+    - docker run -it --tm --device-write-iops /dev/xvda:100 ubuntu:latest /bin/bash
 
 
 #########################################################################
 2. 컨테이너 모니터링 하기
+- 도커의 시스템 자원 모니터링 도구
+  ㄴ docker stats <컨테이너 이름>
+  ㄴ docker stats 만 입력시 전체 컨테이너 자원 사용량이 조회된다.
+  ㄴ crm  으로 종료
+    - alias crm='docker rm -f $(docker ps -aq)'
+
+- 스토리지 디바이스 정보 출력
+  ㄴ lsblk
+     -f : 파일시스템 정보
+	 -t : topology 정보
+
 
 
 
 #########################################################################
 3. cAdvisor 이용하기
+- https://github.com/google/cadvisor
+-----------------------------------------------------
+VERSION=v0.36.0 # use the latest release version from https://github.com/google/cadvisor/releases
+sudo docker run \
+  --volume=/:/rootfs:ro \
+  --volume=/var/run:/var/run:ro \
+  --volume=/sys:/sys:ro \
+  --volume=/var/lib/docker/:/var/lib/docker:ro \
+  --volume=/dev/disk/:/dev/disk:ro \
+  --publish=8080:8080 \
+  --detach=true \
+  --name=cadvisor \
+  --privileged \
+  --device=/dev/kmsg \
+  gcr.io/cadvisor/cadvisor:$VERSION
+-----------------------------------------------------
+- 접속주소 : (호스트IP:8080)

@@ -63,7 +63,7 @@
 - 컨테이너 이미지 실행
   ㄴ docker run --name web -d -p 80:80 nginx
     - docker run -d --name web -p 80:80 nginx:latest
-	  ㄴ -d	 	: detached(분리된) 모드로 (반대:foreground)
+	  ㄴ -d	 	: detached(분리된) 모드 - 백그라운드 모드로 (반대:foreground)
 	  ㄴ --name 	: web 이라는 이름의 컨테이너 (컨테이너를 식별하는 이름. 그외 UUID long, UUID short이 있다.)
       ㄴ -p	 	: 80포트로 nginx 이미지를 담아 실행 시킨다. (호스트의 포트 80 을 컨테이너 80포트에 연결 시킨다.)
 	              (※ -P 1234-1236:1234-1236 : 대역폭으로 할당도 가능하다. )
