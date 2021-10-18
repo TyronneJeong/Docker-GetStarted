@@ -106,9 +106,6 @@ CMD        ["/bin/sh", "-c", "stress --vm 2 --vm-bytes 4096"]
      -f : 파일시스템 정보
 	 -t : topology 정보
 
-
-
-
 #########################################################################
 3. cAdvisor 이용하기
 - https://github.com/google/cadvisor
