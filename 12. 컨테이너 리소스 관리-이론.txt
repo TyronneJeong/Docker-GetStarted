@@ -1,0 +1,102 @@
+#########################################################################
+[컨테이너 리소스 관리-이론]
+Q1. 컨테이너 하드웨어 리소스 제한하는 방법?
+Q2. 컨테이너 사용 리소스 모니터링 툴은?
+
+#########################################################################
+Q1. 컨테이너 하드웨어 리소스 제한하는 방법?
+- docker command 를 통해 제한 가능한 리소스
+  ㄴ CPU
+  ㄴ Memory
+  ㄴ Disk I/O
+
+- 을 통해 명령어 확인
+  ㄴ docker run --help 
+    ---------------------------------------------------------------------
+    [메모리제한]
+    ---------------------------------------------------------------------
+    --memory bytes                   Memory limit
+    --memory-reservation bytes       Memory soft limit
+    --memory-swap bytes              Swap limit equal to memory plus swap: '-1' to enable unlimited swap
+    --memory-swappiness int          Tune container memory swappiness (0 to 100) (default -1)
+    ---------------------------------------------------------------------
+	[CPU 제한]
+	---------------------------------------------------------------------
+    --cpu-period int                 Limit CPU CFS (Completely Fair Scheduler) period
+    --cpu-quota int                  Limit CPU CFS (Completely Fair Scheduler) quota
+    --cpu-rt-period int              Limit CPU real-time period in microseconds
+    --cpu-rt-runtime int             Limit CPU real-time runtime in microseconds
+    --cpu-shares int                 CPU shares (relative weight)
+    --cpus decimal                   Number of CPUs
+    --cpuset-cpus string             CPUs in which to allow execution (0-3, 0,1)
+    --cpuset-mems string             MEMs in which to allow execution (0-3, 0,1)
+    ---------------------------------------------------------------------
+	[Block I/O weight]
+	---------------------------------------------------------------------
+    --blkio-weight uint16            Block IO (relative weight), between 10 and 1000, or 0 to disable (default 0)
+    --blkio-weight-device list       Block IO weight (relative device weight) (default [])
+	---------------------------------------------------------------------
+	
+	---------------------------------------------------------------------
+	[Block I/O제한]
+	---------------------------------------------------------------------
+	--device-read-bps list           Limit read rate (bytes per second) from a device (default [])
+    --device-read-iops list          Limit read rate (IO per second) from a device (default [])
+    --device-write-bps list          Limit write rate (bytes per second) to a device (default [])
+    --device-write-iops list         Limit write rate (IO per second) to a device (default [])	
+    
+
+- [메모리제한]
+  ㄴ 컨테이너가 사용 가능한 최대 메모리 량 (--memory or -m)
+	- docker run -d -m 512m nginx:1.14
+	
+  ㄴ 컨테이너가 사용 가능한 최대 스왑 메모리 량 (--memory-swap)
+    - 디스크를 메모리처럼 사용하는 공간으로 통상적으로 메모리의 2배가 자동 할당 됨.
+    - docker run -d -m 200m --memory-swap 300m nginx:1.14
+	- 실제 swap 으로 잡히는 메모리 용량은 300m 로 이 안에는 메모리 200m 도 포함한 용량이다.
+	
+  ㄴ 컨테이너가 사용 가능한 최소 메모리 량 (--memory-reservation)
+    - docker run -d -m 1g --memory-reservation 500m nginx:1.14
+	
+  ㄴ Out of Memory Killer 가 프로세스를 kill 하지 못하도록 보호
+    - 리눅스 커널의 고유 기능으로. 피지컬 메모리 사용량을 초과하는 경우 해당 프로세스는 kill 된다.
+    - docker run -d -m 200m --oom-kill-diable nginx:1.14
+
+- [CPU]
+  ㄴ 컨테이너에 할당 될 CPU core 의 수
+    - docker run -d --cpus=".5" ubuntu:1.4
+	
+  ㄴ 컨테이너가 사용 가능한 CPU 또는 코어 수 Range
+    - docker run -d --cpuset-cpus 0-3 ubuntu:1.14
+	
+  ㄴ 컨테이너가 사용하는 CPU의 비중을 1024값 기반으로 설정
+    - 1024 값은 상대적 비중 값으로 컨테이너의 기본값은 1024이다.
+	- 2048을 지정시 다른 컨테이너들에 비해 2배 많은 자원을 할당 받게 된다.
+    - docker run -d --cpuset-cpus 2048 ubuntu:1.14
+
+- [Block I/O]
+  ㄴ 블록I/O의 상대적 가중치인 Quota 를 설정 (--blkio-weight, --blkio-weight-device)
+    - 100~1000 까지 선택 가능하며, 기본 값은 500이다
+	- docker run -it --rm --blkio-weight 100 ubuntu:latest /bin/bash
+	
+  ㄴ 특정 디바이스에 대한 읽기와 쓰기 속도 제한을 부여 (--device-read-bps, --device-write-bps)
+    - 속도 제한은 초당 kb, mb, gb 단위로 설정 가능하다.
+	- docker run -it --rm --device-write-bps /deb/vda:1mb ubuntu:latest /bin/bash
+	- docker run -it --rm --device-write-bps /deb/vda:10mb ubuntu:latest /bin/bash
+
+  ㄴ 컨테이너의 read/write 속도의 쿼터를 설정한다.
+    - 초당 데이터 전송량 = IOPS * 블럭크기
+	- docker run -it --rm --device-write-iops /deb/vda:10 ubuntu:latest /bin/bash
+	- docker run -it --rm --device-write-iops /deb/vda:100 ubuntu:latest /bin/bash
+  
+#########################################################################
+Q2. 컨테이너 사용 리소스 모니터링 툴은?
+- 실행중인 컨테이너의 런타임 통계를 확인
+  ㄴ docker stat [options] <컨테이너 이름>
+  
+- 도커 호스트 (컨테이너를 실행중인 서버)의 이벤트 발생 정보를 출력
+  ㄴ docker event -f container=<NAME>
+  ㄴ docker image -f container=<NAME>
+
+- cAdvisor
+  ㄴ https://github.com/google/cadvisor

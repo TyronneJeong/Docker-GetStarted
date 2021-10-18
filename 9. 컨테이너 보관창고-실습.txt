@@ -5,6 +5,9 @@
 
 #########################################################################
 1. hub.docker.com 에 컨테이너 업로드 및 다운로드
+- 활성 및 종료된 컨테이너 모두 보기
+  ㄴ docker ps -a
+  
 - docker search 를 이용한 public docker hub 검색
   ㄴ ex) docker search httpd
 
@@ -14,13 +17,32 @@
 - 컨테이너 이미지 업로드
   ㄴ docker login 하기
     - (/root/.docker/config.json 내 접속 인증정보 보관)
+	
   ㄴ docker tag 지정
     - 로컬시스탬에 생성된 컨테이너 이미지에 태그를 해야만 대상 계정으로 푸쉬가 가능하다.
-    - ex) docker tag httpd:latest maurois/httpd:latest
+	  ㄴ 태그된 대상이 푸쉬 대상이 됨.
+    - ex) docker tag httpd:latest {계정명}/httpd:latest
 	
-  ㄴ docker push maurois/httpd:latest
+  ㄴ 도커 허브에 컨테이너 이미지 등록
+    - docker push {계정명}/httpd:latest
 
 #########################################################################
 2. private registry 운영하기
 - docker registry 설치
 
+- docker registry 실행
+  ㄴ docker run -d -p 5000:5000 --restart always --name registry registry:2
+  ㄴ 로컬 시스템에 설치된 registry 의 위치
+    - /var/lib/docker/volumes/{uuid}/_data/docker/registry/v2/repositories/
+
+- localhost 로 태그 지정
+  ㄴ 앞서 실행한 registry에 푸쉬하기 위하여 태그 목적지를 정의한다.
+    - docker tag httpd:latest localhost:5000/httpd:latest
+  
+- private registry 에 등록된 이미지 확인하기
+  ㄴ docker images localhost:5000/httpd
+  
+- 컨테이너 이미지 private 허브에 등록하기
+  ㄴ docker push localhost:5000/httpd:latest
+  ㄴ 푸쉬된 이미지 파일 확인하기
+    - /var/lib/docker/volumes/{uuid}/_data/docker/registry/v2/repositories/
